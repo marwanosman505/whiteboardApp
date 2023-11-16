@@ -1,0 +1,38 @@
+<!--allow user to create account
+    -store user login details
+-->
+
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>WhiteBoard</title>
+    <link rel="stylesheet" href="WhiteBoard.css" />
+
+</head>
+
+<body>
+
+
+    <div id="sidemenu">
+        <button class="menuBtn" onclick="selectCircle()">Circle</button><br><br>
+        <button class="menuBtn" onclick="selectRectangle()">Rectangle</button><br><br>
+        <button class="menuBtn" onclick="selectAddText()">Add Text</button><br><br>
+        <button class="menuBtn" onclick="selectDraw()">Draw</button><br><br>
+        <button class="menuBtn" onclick="selectErase()">Erase</button><br><br>
+    </div>
+
+
+    <div id="canvasContainer">
+        
+        <canvas id="Canvas"></canvas>
+        <canvas id="overlay"></canvas>
+    </div>
+
+
+</body>
+
+</html>
+
+
+<script src="WhiteBoard.js"></script>
