@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('Canvas');
 const ctx = canvas.getContext('2d');
 
@@ -22,15 +21,79 @@ let text = false;
 let erase = false;
 
 
+
 window.addEventListener('load', () => {
-    resize(); // Resizes the canvas once the window loads 
-    document.addEventListener('click', handleOutsideClick);
+    resize();
+
+    window.addEventListener('click', handleOutsideClick);
     document.addEventListener("mousedown", startdrawing);
     document.addEventListener("mousemove", sketch);
     document.addEventListener("mouseup", stopdrawing);
     document.addEventListener("mouseout", stopdrawing);
     window.addEventListener('resize', resize);
+    redraw();
+
+
 });
+
+
+async function saveState() {
+    console.log("before save")
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    await fetch('/WhiteBoard', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: 'canvasState', data: imageData }),
+    });
+
+    console.log("after save")
+
+}
+
+async function redraw() {
+    /*  
+      console.log("before redraw")
+  
+      const response = await fetch('/WhiteBoard');
+      
+      const latestDrawing = await response.json();
+      console.log(latestDrawing.JSON);
+   
+      if (latestDrawing) {
+          ctx.putImageData(latestDrawing.data, 0, 0);
+      }
+  
+      console.log("after redraw")
+      */
+
+    console.log("before redraw");
+
+    try {
+        const response = await fetch('/WhiteBoard');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        var latestDrawing = await response.json();
+        latestDrawing = JSON.parse(response);
+        
+        console.log("Latest Drawing:", latestDrawing);
+
+        if (latestDrawing && latestDrawing.data) {
+            ctx.putImageData(latestDrawing.data, 0, 0);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+
+    console.log("after redraw");
+
+}
+
 
 function resize() {
     ctx.canvas.width = canvas.clientWidth;
@@ -59,13 +122,15 @@ function startdrawing(event) {
 function stopdrawing() {
     controls = false;
 
-    if(rectangle){
+    if (rectangle) {
         ctx.strokeRect(prevStart.x, prevStart.y, prevWidth, prevHeight);
 
-    }else if(circle){
+    } else if (circle) {
         ctx.arc(coord.x, coord.y, radius, 0, 2 * Math.PI);
         ctx.stroke();
     }
+
+    //saveState();
 
 }
 
@@ -117,15 +182,13 @@ function sketch(event) {
             ctx.fillText(inputText, coord.x, coord.y);
         }
         controls = false; // Stop adding text after one input
+
     } else if (circle) {
 
         ctx.beginPath();
         radius = Math.sqrt(Math.pow(mouseX - coord.x, 2) + Math.pow(mouseY - coord.y, 2));
         ctxo.arc(coord.x, coord.y, radius, 0, 2 * Math.PI);
         ctxo.stroke();
-
-
-
     }
 
 
@@ -153,7 +216,6 @@ function selectRectangle() {
     document.addEventListener("mousemove", sketch);
     document.addEventListener("mouseup", stopdrawing);
     document.addEventListener("mouseout", stopdrawing);
-
 
 }
 
@@ -193,6 +255,7 @@ function selectCircle() {
 }
 
 function handleOutsideClick(event) {
+
     // Check if the clicked element is outside the menu and canvas
     if (!document.getElementById("sidemenu").contains(event.target) &&
         !document.getElementById("canvasContainer").contains(event.target)
@@ -204,5 +267,7 @@ function handleOutsideClick(event) {
         document.removeEventListener("mouseup", stopdrawing);
         document.removeEventListener("mouseout", stopdrawing);
         controls = false;
+        setFalse(false);
     }
+
 }
