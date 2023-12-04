@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
+
 const app = express();
 const path = require('path');
 const bodyParser = require('body-parser'); // Add this line
@@ -13,6 +14,7 @@ const db = mysql.createPool({
   password: 'Leicester69lol',
   database: 'WhiteBoard',
 });
+
 db.getConnection((err) => {
   if (err) throw err;
   console.log('Connected to MySQL database successfully');
@@ -20,35 +22,16 @@ db.getConnection((err) => {
 
 
 // Serve static files from the 'public' directory
-app.use(express.static(__dirname));
 
-app.use(bodyParser.json({limit: "100mb"}));
-app.use(bodyParser.urlencoded({limit: "100mb", extended: true, parameterLimit:50000}));
+app.use(bodyParser.json({ limit: "3000mb" }));
+app.use(bodyParser.urlencoded({ limit: "3000mb", extended: true, parameterLimit: 500000 }));
 
-app.get(['/', '/WhiteBoard'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'WhiteBoard.html'));
-});
-
-
-// Endpoint to get the latest drawing from the database
-/*
-app.get('/WhiteBoard', (req, res) => {
-  db.query('SELECT * FROM canvas_state ORDER BY id DESC LIMIT 1', (error, results) => {
-    if (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
-    } else {
-      res.json(results[0]);
-    }
-  });
-});
-*/
 
 
 app.get('/WhiteBoard', (req, res) => {
   // Set the content type to JSON
   res.setHeader('Content-Type', 'application/json');
-  
+
   // Your existing query and response logic
   db.query('SELECT * FROM canvas_state ORDER BY id DESC LIMIT 1', (error, results) => {
     if (error) {
@@ -60,6 +43,11 @@ app.get('/WhiteBoard', (req, res) => {
   });
 });
 
+
+app.use(express.static(__dirname));
+app.get(['/', '/WhiteBoard'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'WhiteBoard.html'));
+});
 
 app.post('/WhiteBoard', (req, res) => {
   const { type, data } = req.body;
@@ -98,6 +86,7 @@ app.post('/WhiteBoard', (req, res) => {
     }
   });
 });
+
 
 // Start the server
 app.listen(port, () => {
