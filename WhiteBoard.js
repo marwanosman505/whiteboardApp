@@ -1,6 +1,7 @@
 const canvas = document.getElementById('Canvas');
 const ctx = canvas.getContext('2d');
 
+//for drawing shapes, not displayed
 const overlay = document.getElementById('overlay');
 const ctxo = overlay.getContext('2d');
 
@@ -13,7 +14,6 @@ var prevHeight = 0;
 var radius = 0;
 
 let controls = false;
-
 let draw = false;
 let rectangle = false;
 let circle = false;
@@ -21,86 +21,86 @@ let text = false;
 let erase = false;
 
 
-
 window.addEventListener('load', () => {
+    redraw();
     resize();
-
+    
     window.addEventListener('click', handleOutsideClick);
     document.addEventListener("mousedown", startdrawing);
     document.addEventListener("mousemove", sketch);
     document.addEventListener("mouseup", stopdrawing);
     document.addEventListener("mouseout", stopdrawing);
     window.addEventListener('resize', resize);
-    redraw();
-
 
 });
 
+function showMessage(message) {
+    //show laoding/saving message
+    document.getElementById('Message').style.display = 'block';
+    document.getElementById('MessageTxt').textContent = message;
+}
+
+function hideMessage() {
+    //hide loading/saving message
+   document.getElementById('Message').style.display = 'none';
+}
 
 async function saveState() {
-    console.log("before save")
+    //store pixel data from canvas and write to db
+    showMessage('Saving...');
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
     await fetch('/WhiteBoard', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type: 'canvasState', data: imageData }),
+        body: JSON.stringify({ type:'canvasState', data: imageData.data }),
     });
 
-    console.log("after save")
+    hideMessage();
 
 }
 
 async function redraw() {
-    /*  
-      console.log("before redraw")
-  
-      const response = await fetch('/WhiteBoard');
-      
-      const latestDrawing = await response.json();
-      console.log(latestDrawing.JSON);
-   
-      if (latestDrawing) {
-          ctx.putImageData(latestDrawing.data, 0, 0);
-      }
-  
-      console.log("after redraw")
-      */
 
-    console.log("before redraw");
+    //load pixel data from db and put back on canvas
+
+    showMessage('Loading...');
 
     try {
         const response = await fetch('/WhiteBoard');
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+        const latestDrawing = await response.json();
+
+        if (latestDrawing && latestDrawing.type === 'canvasState') {
+            // Get the image data from the response
+            const imageData = latestDrawing.data;
+
+            // Convert the data back into ImageData
+            const parsedImageData = JSON.parse(imageData);
+            const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
+            imageDataObject.data.set(Object.values(parsedImageData));
+
+            // Put the ImageData on the canvas
+            ctx.putImageData(imageDataObject, 0, 0);
         }
 
-        var latestDrawing = await response.json();
-        latestDrawing = JSON.parse(response);
-        
-        console.log("Latest Drawing:", latestDrawing);
-
-        if (latestDrawing && latestDrawing.data) {
-            ctx.putImageData(latestDrawing.data, 0, 0);
-        }
     } catch (error) {
         console.error('Error:', error);
     }
 
-    console.log("after redraw");
+    hideMessage();
 
 }
 
-
 function resize() {
+    //resize canvas
     ctx.canvas.width = canvas.clientWidth;
     ctx.canvas.height = canvas.clientHeight;
 }
 
 function setFalse(state) {
+    //turn off/on all controls
     draw = state;
     rectangle = state;
     circle = state;
@@ -109,6 +109,7 @@ function setFalse(state) {
 }
 
 function getPosition(event) {
+    //get position of click
     coord.x = event.clientX - canvas.offsetLeft;
     coord.y = event.clientY - canvas.offsetTop;
 
@@ -130,18 +131,14 @@ function stopdrawing() {
         ctx.stroke();
     }
 
-    //saveState();
-
 }
 
 function sketch(event) {
     if (!controls) return;
 
-
     //get first posistion of mouse for shapes
     var mouseX = parseInt(event.clientX - canvas.offsetLeft);
     var mouseY = parseInt(event.clientY - canvas.offsetTop);
-
 
     ctx.lineWidth = 2;
     ctx.strokeStyle = 'black';
