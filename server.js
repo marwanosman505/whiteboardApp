@@ -1,46 +1,51 @@
-const express = require('express');
-const mysql = require('mysql');
+const MongoClient = require('mongodb').MongoClient;
+const uri = "mongodb+srv://wobowizard2:WhiteBoard123@whiteboard.jdudd1i.mongodb.net/";
+const client = new MongoClient(uri);
+const database = client.db("Whiteboard");
+const Canvases = database.collection("Canvases");
 
+const express = require('express');
 const app = express();
 const path = require('path');
-const bodyParser = require('body-parser'); // Add this line
+const bodyParser = require('body-parser');
+const zlib = require('zlib');
 const port = 8080;
-
-// Create a MySQL connection pool
-const db = mysql.createPool({
-  connectionLimit: 10,
-  host: 'localhost',
-  user: 'root',
-  password: 'Leicester69lol',
-  database: 'WhiteBoard',
-});
-
-db.getConnection((err) => {
-  if (err) throw err;
-  console.log('Connected to MySQL database successfully');
-});
 
 
 // Serve static files from the 'public' directory
-
 app.use(bodyParser.json({ limit: "3000mb" }));
 app.use(bodyParser.urlencoded({ limit: "3000mb", extended: true, parameterLimit: 500000 }));
 
 
+//read from mongodb
+app.get('/WhiteBoard', async (req, res) => {
+  try {
+    // Retrieve the latest document from the collection
+    const latestDrawing = await Canvases.find().sort({ _id: -1 }).limit(1).toArray();
 
-app.get('/WhiteBoard', (req, res) => {
-  // Set the content type to JSON
-  res.setHeader('Content-Type', 'application/json');
+    if (latestDrawing.length > 0) {
 
-  // Your existing query and response logic
-  db.query('SELECT * FROM canvas_state ORDER BY id DESC LIMIT 1', (error, results) => {
-    if (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
+      console.log("1");
+      // Decompress data using zlib
+      const decompressedData = zlib.inflateSync(latestDrawing[0].data.toString());
+      console.log(decompressedData);
+      //const dataArray = Array.from(new Uint8Array(decompressedData));
+      //const data = JSON.stringify(dataArray);
+      
+      // Create a new object with the parsed data
+      const response = {
+        type: latestDrawing[0].type,
+        data: decompressedData.toString(),
+      };
+
+      res.json(response);
     } else {
-      res.json(results[0]);
+      res.status(404).send('No drawings found');
     }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 
@@ -49,42 +54,36 @@ app.get(['/', '/WhiteBoard'], (req, res) => {
   res.sendFile(path.join(__dirname, 'WhiteBoard.html'));
 });
 
-app.post('/WhiteBoard', (req, res) => {
+
+//write to mongoDB
+app.post('/WhiteBoard', async (req, res) => {
   const { type, data } = req.body;
+  try {
 
-  // Check if there is an existing row
-  db.query('SELECT COUNT(*) as count FROM canvas_state', (selectError, selectResults) => {
-    if (selectError) {
-      console.error(selectError);
-      res.status(500).send('Internal Server Error');
-    } else {
-      const rowCount = selectResults[0].count;
+    //compress canvas data
+    const compressedData = zlib.deflateSync(data.toString());
+    console.log(compressedData);
+  
 
-      if (rowCount === 0) {
-        // If no rows exist, use INSERT
-        db.query('INSERT INTO canvas_state (type, data) VALUES (?, ?)', [type, JSON.stringify(data)], (insertError) => {
-          if (insertError) {
-            console.error(insertError);
-            res.status(500).send('Internal Server Error');
-          } else {
-            res.status(204).end();
-          }
-        });
+    // Create a document to insert
+    const doc = {
+      type: type,
+      data: compressedData.toString(),
+    };
 
-      } else {
-        // If rows exist, use UPDATE
-        db.query('UPDATE canvas_state SET type = ?, data = ? WHERE id = 1', [type, JSON.stringify(data)], (updateError) => {
-          if (updateError) {
-            console.error(updateError);
-            res.status(500).send('Internal Server Error');
-          } else {
-            res.status(204).end();
-          }
-        });
-        
-      }
-    }
-  });
+    // Insert the defined document into the "Canvases" collection
+    const result = await Canvases.insertOne(doc);
+    console.log(`New data inserted`);
+
+    // Send a response to the client
+    res.status(204).end();
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+
+  } 
+
 });
 
 
@@ -92,3 +91,4 @@ app.post('/WhiteBoard', (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
+

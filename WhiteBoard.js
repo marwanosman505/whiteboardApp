@@ -1,3 +1,5 @@
+//WINDOW MUST BE MAXIMIZED FOR CANVAS TO PERSIST
+
 const canvas = document.getElementById('Canvas');
 const ctx = canvas.getContext('2d');
 
@@ -50,6 +52,7 @@ async function saveState() {
     showMessage('Saving...');
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+    console.log(imageData.data);
     await fetch('/WhiteBoard', {
         method: 'POST',
         headers: {
@@ -73,6 +76,7 @@ async function redraw() {
         const latestDrawing = await response.json();
 
         if (latestDrawing && latestDrawing.type === 'canvasState') {
+            /*
             // Get the image data from the response
             const imageData = latestDrawing.data;
 
@@ -83,6 +87,17 @@ async function redraw() {
 
             // Put the ImageData on the canvas
             ctx.putImageData(imageDataObject, 0, 0);
+            */
+              // Get the Uint8Array pixel data from the response
+              const dataArray = latestDrawing.data;
+              console.log(dataArray);
+
+              // Convert the data back into ImageData
+              const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
+              imageDataObject.data.set(dataArray);
+  
+              // Put the ImageData on the canvas
+              ctx.putImageData(imageDataObject, 0, 0);
         }
 
     } catch (error) {
