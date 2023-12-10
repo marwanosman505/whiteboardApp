@@ -49,8 +49,8 @@ function hideMessage() {
 
 async function saveState() {
     //store pixel data from canvas and write to db
+    
     showMessage('Saving...');
-
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
     console.log(imageData.data);
     await fetch('/WhiteBoard', {
@@ -66,11 +66,9 @@ async function saveState() {
 }
 
 async function redraw() {
-
     //load pixel data from db and put back on canvas
 
     showMessage('Loading...');
-
     try {
         const response = await fetch('/WhiteBoard');
         const latestDrawing = await response.json();
@@ -80,11 +78,9 @@ async function redraw() {
             // Get the image data from the response
             const imageData = latestDrawing.data;
            
-
             // Convert the data back into ImageData
-            const parsedImageData = imageData//JSON.parse(imageData);
             const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
-            imageDataObject.data.set(Object.values(parsedImageData));
+            imageDataObject.data.set(Object.values(imageData));
 
             // Put the ImageData on the canvas
             ctx.putImageData(imageDataObject, 0, 0);

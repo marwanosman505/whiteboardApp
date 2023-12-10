@@ -24,12 +24,8 @@ app.get('/WhiteBoard', async (req, res) => {
     const latestDrawing = await Canvases.find().sort({ _id: -1 }).limit(1).toArray();
 
     if (latestDrawing.length > 0) {
-
       // Decompress data using zlib
       const decompressedData = zlib.inflateSync(Buffer.from(latestDrawing[0].data, 'base64')).toString('utf8');
-      //console.log(decompressedData);
-      //const dataArray = Array.from(new Uint8Array(decompressedData));
-      //const data = JSON.stringify(dataArray);
       
       // Create a new object with the parsed data
       const response = {
@@ -60,14 +56,9 @@ app.post('/WhiteBoard', async (req, res) => {
   const { type, data } = req.body;
 
   try {
-
     //compress canvas data
-   // const compressedData = zlib.deflateSync(data.toString());
     const compressedData = zlib.deflateSync(JSON.stringify(data));
-
-   // console.log(compressedData.toString());
   
-
     // Create a document to insert
     const doc = {
       type: type,
