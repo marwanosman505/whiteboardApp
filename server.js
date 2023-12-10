@@ -25,20 +25,20 @@ app.get('/WhiteBoard', async (req, res) => {
 
     if (latestDrawing.length > 0) {
 
-      console.log("1");
       // Decompress data using zlib
-      const decompressedData = zlib.inflateSync(latestDrawing[0].data.toString());
-      console.log(decompressedData);
+      const decompressedData = zlib.inflateSync(Buffer.from(latestDrawing[0].data, 'base64')).toString('utf8');
+      //console.log(decompressedData);
       //const dataArray = Array.from(new Uint8Array(decompressedData));
       //const data = JSON.stringify(dataArray);
       
       // Create a new object with the parsed data
       const response = {
         type: latestDrawing[0].type,
-        data: decompressedData.toString(),
+        data: JSON.parse(decompressedData),
       };
 
       res.json(response);
+      console.log('Loaded')
     } else {
       res.status(404).send('No drawings found');
     }
@@ -58,17 +58,20 @@ app.get(['/', '/WhiteBoard'], (req, res) => {
 //write to mongoDB
 app.post('/WhiteBoard', async (req, res) => {
   const { type, data } = req.body;
+
   try {
 
     //compress canvas data
-    const compressedData = zlib.deflateSync(data.toString());
-    console.log(compressedData);
+   // const compressedData = zlib.deflateSync(data.toString());
+    const compressedData = zlib.deflateSync(JSON.stringify(data));
+
+   // console.log(compressedData.toString());
   
 
     // Create a document to insert
     const doc = {
       type: type,
-      data: compressedData.toString(),
+      data: compressedData.toString('base64'),
     };
 
     // Insert the defined document into the "Canvases" collection

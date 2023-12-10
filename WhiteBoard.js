@@ -76,28 +76,18 @@ async function redraw() {
         const latestDrawing = await response.json();
 
         if (latestDrawing && latestDrawing.type === 'canvasState') {
-            /*
+          
             // Get the image data from the response
             const imageData = latestDrawing.data;
+           
 
             // Convert the data back into ImageData
-            const parsedImageData = JSON.parse(imageData);
+            const parsedImageData = imageData//JSON.parse(imageData);
             const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
             imageDataObject.data.set(Object.values(parsedImageData));
 
             // Put the ImageData on the canvas
             ctx.putImageData(imageDataObject, 0, 0);
-            */
-              // Get the Uint8Array pixel data from the response
-              const dataArray = latestDrawing.data;
-              console.log(dataArray);
-
-              // Convert the data back into ImageData
-              const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
-              imageDataObject.data.set(dataArray);
-  
-              // Put the ImageData on the canvas
-              ctx.putImageData(imageDataObject, 0, 0);
         }
 
     } catch (error) {
