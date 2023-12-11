@@ -50,7 +50,7 @@ function hideMessage() {
 
 async function saveState() {
     //store pixel data from canvas and write to db
-
+    redraw();
     showMessage('Saving...');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
     await fetch('/WhiteBoard', {
@@ -63,7 +63,7 @@ async function saveState() {
 
     hideMessage();
 
-    redraw();
+    
 
 }
 
