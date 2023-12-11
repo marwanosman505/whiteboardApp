@@ -73,6 +73,27 @@ async function saveState() {
 
 }
 
+async function clearState(){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    showMessage('Saving...');
+    const newImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+    
+    // merge
+
+    await fetch('/WhiteBoard', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type:'canvasState', data: newImageData.data }),
+    });
+    
+    hideMessage();
+    await redraw();
+
+}
+
 function mergeImageData(imageData1, imageData2) {
     // Ensure the dimensions of both ImageData objects are the same
     if (imageData1.width !== imageData2.width || imageData1.height !== imageData2.height) {
