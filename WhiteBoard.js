@@ -50,22 +50,49 @@ function hideMessage() {
 
 async function saveState() {
     //store pixel data from canvas and write to db
-    redraw();
+   const prevImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+   await redraw();
+
     showMessage('Saving...');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+    const newImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+    
+    // merge
+    const mergeddata = mergeImageData(prevImageData, newImageData);
+
     await fetch('/WhiteBoard', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type:'canvasState', data: imageData.data }),
+        body: JSON.stringify({ type:'canvasState', data: mergeddata.data }),
     });
-
+    
     hideMessage();
-
+    await redraw();
     
 
 }
+
+function mergeImageData(imageData1, imageData2) {
+    // Ensure the dimensions of both ImageData objects are the same
+    if (imageData1.width !== imageData2.width || imageData1.height !== imageData2.height) {
+      throw new Error('Image dimensions do not match');
+    }
+  
+    const mergedImageData = new ImageData(imageData1.width, imageData1.height);
+    const totalPixels = imageData1.width * imageData1.height;
+  
+    // Merge pixel data
+    for (let i = 0; i < totalPixels * 4; i += 4) {
+      // Average the pixel values from both ImageData objects
+      mergedImageData.data[i] = Math.floor((imageData1.data[i] + imageData2.data[i]) / 2);
+      mergedImageData.data[i + 1] = Math.floor((imageData1.data[i + 1] + imageData2.data[i + 1]) / 2);
+      mergedImageData.data[i + 2] = Math.floor((imageData1.data[i + 2] + imageData2.data[i + 2]) / 2);
+      mergedImageData.data[i + 3] = Math.floor((imageData1.data[i + 3] + imageData2.data[i + 3]) / 2);
+    }
+  
+    return mergedImageData;
+  }
 
 async function redraw() {
     //load pixel data from db and put back on canvas
@@ -81,7 +108,8 @@ async function redraw() {
             const imageData = latestDrawing.data;
            
             // Convert the data back into ImageData
-            const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
+             const imageDataObject = ctx.createImageData(canvas.width, canvas.height);
+            //const imageDataObject = ctx.createImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
             imageDataObject.data.set(Object.values(imageData));
 
             // Put the ImageData on the canvas
