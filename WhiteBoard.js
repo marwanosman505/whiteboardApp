@@ -23,6 +23,7 @@ let text = false;
 let erase = false;
 
 
+
 window.addEventListener('load', () => {
     redraw();
     resize();
@@ -49,10 +50,9 @@ function hideMessage() {
 
 async function saveState() {
     //store pixel data from canvas and write to db
-    
+
     showMessage('Saving...');
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
-    console.log(imageData.data);
     await fetch('/WhiteBoard', {
         method: 'POST',
         headers: {
@@ -62,6 +62,8 @@ async function saveState() {
     });
 
     hideMessage();
+
+    redraw();
 
 }
 

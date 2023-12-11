@@ -42,6 +42,7 @@ app.get('/WhiteBoard', async (req, res) => {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
+
 });
 
 
@@ -75,7 +76,6 @@ app.post('/WhiteBoard', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
-
   } 
 
 });
